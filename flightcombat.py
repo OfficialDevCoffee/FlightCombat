@@ -17,6 +17,9 @@ def initGame():
     global gamepad, clock, background1, background2
     global player, enemy, meteor, bullet
 
+    enemy = []
+    meteor = []
+    
     pygame.init()
 
     gamepad = pygame.display.set_mode((pad_width,pad_height))
@@ -25,6 +28,10 @@ def initGame():
     background1 = pygame.image.load('image/background.png')
     background2 = background1.copy()
     player = pygame.image.load('image/player.png')
+    enemy.append(pygame.image.load("image/enemy_a.png"))
+    enemy.append(pygame.image.load("image/enemy_b.png"))
+    meteor.append(pygame.image.load("image/meteor_a.png"))
+    meteor.append(pygame.image.load("image/meteor_b.png"))
     bullet = pygame.image.load("image/bullet.png")
     
     clock = pygame.time.Clock()
@@ -35,6 +42,8 @@ def runGame():
     global gamepad, clock, background1, background2
     global player, enemy, meteor, bullet
 
+    enemy_txy = []
+    meteor_txy = []
     bullet_xy = []
     
     speed = 5
@@ -50,33 +59,42 @@ def runGame():
     crashed = False
     while not crashed:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                crashed = True
+            if pygame.key.get_pressed()[pygame.K_w]:
+                player_y_change = -5
+                pass
+            elif pygame.key.get_pressed()[pygame.K_s]:
+                player_y_change = 5
+                pass
+            else:
+                player_y_change = 0
+                pass
+            if pygame.key.get_pressed()[pygame.K_a]:
+                player_x_change = -5
+                pass
+            elif pygame.key.get_pressed()[pygame.K_d]:
+                player_x_change = 5
+                pass
+            else:
+                player_x_change = 0
+                pass
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    player_y_change = -5
-                    pass
-                elif event.key == pygame.K_DOWN:
-                    player_y_change  = 5
-                    pass
-                elif event.key == pygame.K_RIGHT:
-                    player_x_change = 5
-                    pass
-                elif event.key == pygame.K_LEFT:
-                    player_x_change = -5
-                    pass
-                elif event.key == pygame.K_SPACE:
-                    bullet_xy.append([player_x + 11, player_y])
+                if event.key == pygame.K_SPACE:
+                    bullet_xy.append([player_x+11,player_y])
                     pass
                 pass
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_DOWN or pygame.K_UP:
-                    player_y_change = 0
-                if event.key == pygame.K_RIGHT or pygame.K_LEFT:
-                    player_x_change = 0
+            if event.type == pygame.QUIT:
+                crashed = True
                 pass
             pass
 
+        meteor_type = random.randrange(1,200)
+        if meteor_type == 1:
+            meteor_txy.append([meteor[0],random.randrange(30, pad_width - 30),-100])
+            pass
+        elif meteor_type == 2:
+            meteor_txy.append([meteor[1],random.randrange(30, pad_width - 30),-100])
+            pass
+        
         background1_y += speed
         background2_y += speed
 
@@ -112,6 +130,16 @@ def runGame():
                     pass
                 pass
             pass
+
+        if not len(meteor_txy) == 0:
+            for i, mtr in enumerate(meteor_txy):
+                mtr[2] += speed * 1.5
+                meteor_txy[i][2] = mtr[2]
+                if mtr[2] >= pad_height:
+                    meteor_txy.remove(mtr)
+                    pass
+                pass
+            pass
         
         gamepad.fill((6,17,39))
 
@@ -121,6 +149,12 @@ def runGame():
         if not len(bullet_xy) == 0:
             for bx, by in bullet_xy:
                 drawObject(bullet,bx,by)
+                pass
+            pass
+
+        if not len(meteor_txy) == 0:
+            for mt, mx, my in meteor_txy:
+                drawObject(mt,mx,my)
                 pass
             pass
         
