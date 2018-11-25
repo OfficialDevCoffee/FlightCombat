@@ -8,6 +8,10 @@ import color
 pad_width = 480
 pad_height = 720
 caption = "Flight Combat"
+left = 0
+center = 1
+right = 2
+score = 0
 
 def drawObject(obj, x, y):
     global gamepad
@@ -18,20 +22,20 @@ def textObject(text, font, color):
     textSurface = font.render(text, True, color)
     return textSurface, textSurface.get_rect()
 
-def drawText(text, size, color, x, y):
+def drawText(text, size, color, x, y, align):
     global gamepad
     textFont = pygame.font.Font('font/pixel.ttf', size)
     TextSurf, TextRect = textObject(text, textFont, color)
-    TextRect.center = (x, y)
+    if align == left:
+        TextRect.midleft = (x, y)
+        pass
+    elif align == center:
+        TextRect.center = (x, y)
+        pass
+    elif align == right:
+        TextRect.midright = (x, y)
+        pass
     gamepad.blit(TextSurf, TextRect)
-    pygame.display.update()
-    pass
-
-def gameOver():
-    global gamepad
-    drawText("Game Over", 100, color.red, pad_width / 2, pad_height / 2)
-    sleep(2)
-    runGame()
     pass
 
 def initGame():
@@ -58,12 +62,89 @@ def initGame():
     bullet_enemy = pygame.image.load("image/bullet_enemy.png")
     
     clock = pygame.time.Clock()
-    runGame()
+    mainScreen()
+    pass
+	
+def mainScreen():
+    global gamepad, clock, background1, background2
+
+    background1_y = 0
+    background2_y = -pad_height
+    
+    i = 1
+    msgDisp = False
+    crashed = False
+    while not crashed:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    runGame()
+                    pass
+                pass
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+                pass
+            pass
+        if i % 30 == 0:
+            if msgDisp:
+                i = 0
+                msgDisp = False
+                pass
+            else:
+                msgDisp = True
+                pass
+            pass
+        i += 1
+
+        background1_y += 5
+        background2_y += 5
+
+        if background1_y > pad_height:
+            background1_y = -pad_height
+            pass
+        if background2_y > pad_height:
+            background2_y = -pad_height
+            pass
+        
+        gamepad.fill((6,17,39))
+        drawObject(background1,0,background1_y)
+        drawObject(background2,0,background2_y)
+        drawText("Flight Combat", 100, color.white, pad_width / 2, pad_height / 2 - 100, center)
+        drawText("Copyright: Studio.Chem, 2018-2019 | stdio.chem@gmail.com", 30, color.lightgray, pad_width / 2, pad_height - 30, center)
+        if msgDisp:
+            drawText("Press Space To Start", 50, color.lightgray, pad_width / 2, pad_height / 2, center)
+            pass
+        pygame.display.update()
+        clock.tick(60)
+        pass
     pass
 
+def gameOver():
+    global gamepad
+    drawText("Game Over", 100, color.red, pad_width / 2, pad_height / 2 - 50, center)
+    drawText("Your Score : " + str(score), 50, color.white, pad_width / 2, pad_height / 2 + 30, center)
+    drawText("Replay? (Y / N)", 50, color.white, pad_width / 2, pad_height / 2 + 80, center)
+    pygame.display.update()
+    crashed = False
+    while not crashed:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_y:
+                    runGame()
+                    pass
+                elif event.key == pygame.K_n:
+                    pygame.quit()
+                    quit()
+                    pass
+                pass
+            pass
+        pass
+    pass
+	
 def runGame():
     global gamepad, clock, background1, background2
-    global player, enemy, meteor, bullet, bullet_enemy
+    global player, enemy, meteor, bullet, bullet_enemy, score
 
     enemy_txy = []
     meteor_txy = []
@@ -221,7 +302,7 @@ def runGame():
                             pass
                         pass
                     pass
-                if bxy[1] > pad_width:
+                if bxy[1] > pad_height:
                     try:
                         bullet_enemy_xy.remove(bxy)
                         pass
@@ -256,6 +337,7 @@ def runGame():
                         pass
                 if emy[7] > 15:
                     enemy_txy.remove(emy)
+                    score += 10
                     pass
                 if not emy[3]:
                     emy[2] += emy[5]
@@ -329,9 +411,13 @@ def runGame():
                 drawObject(et,ex,ey)
                 pass
             pass
-        
+
         drawObject(player, player_x, player_y)
-        
+        if player_health < 0:
+            player_health = 0
+            pass
+        drawText(str(player_health), 50, color.white, 10, 20, left)
+        drawText(str(score), 50, color.white, pad_width - 10, 20, right)
         pygame.display.update()
         clock.tick(60)
         pass
