@@ -441,4 +441,7 @@ def runGame():
     quit()
     pass
 
-initGame()
+if __name__ == '__main__':
+        initGame()
+        pass
+    
