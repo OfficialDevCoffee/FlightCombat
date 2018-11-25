@@ -40,11 +40,14 @@ def drawText(text, size, color, x, y, align):
 
 def initGame():
     global gamepad, clock, background1, background2
-    global player, enemy, meteor, bullet, bullet_enemy
-    global shot_sound, explosion_sound
+    global player, enemy, meteor, bullet, bullet_enemy, item
+    global shot_sound, shot_enemy_sound, explosion_sound
+    global energy_icon
 
+    player = []
     enemy = []
     meteor = []
+    item = []
     
     pygame.init()
 
@@ -53,7 +56,8 @@ def initGame():
 
     background1 = pygame.image.load('image/background.png')
     background2 = background1.copy()
-    player = pygame.image.load('image/player.png')
+    player.append(pygame.image.load('image/player_nomal.png'))
+    player.append(pygame.image.load("image/player_damaged.png"))
     enemy.append(pygame.image.load("image/enemy_a.png"))
     enemy.append(pygame.image.load("image/enemy_b.png"))
     enemy.append(pygame.image.load("image/boom.png"))
@@ -61,9 +65,13 @@ def initGame():
     meteor.append(pygame.image.load("image/meteor_b.png"))
     bullet = pygame.image.load("image/bullet.png")
     bullet_enemy = pygame.image.load("image/bullet_enemy.png")
+    item.append(pygame.image.load("image/energy.png"))
 
     shot_sound = pygame.mixer.Sound("sound/laser.wav")
+    shot_enemy_sound = pygame.mixer.Sound("sound/laser_enemy.wav")
     explosion_sound = pygame.mixer.Sound("sound/explosion.wav")
+
+    energy_icon = pygame.image.load("image/energy_icon.png")
     
     clock = pygame.time.Clock()
     mainScreen()
@@ -129,7 +137,7 @@ def gameOver():
     pygame.mixer.music.stop()
     drawText("Game Over", 100, color.red, pad_width / 2, pad_height / 2 - 50, center)
     drawText("Your Score : " + str(score), 50, color.white, pad_width / 2, pad_height / 2 + 30, center)
-    drawText("Replay? (Y / N)", 50, color.white, pad_width / 2, pad_height / 2 + 80, center)
+    drawText("Replay? (Y/N)", 50, color.white, pad_width / 2, pad_height / 2 + 80, center)
     pygame.display.update()
     crashed = False
     while not crashed:
@@ -153,14 +161,16 @@ def gameOver():
 	
 def runGame():
     global gamepad, clock, background1, background2
-    global player, enemy, meteor, bullet, bullet_enemy, score
+    global player, enemy, meteor, bullet, bullet_enemy, item, score
     global shot_sound, explosion_sound
+    global energy_icon
 
     pygame.mixer.music.load("sound/title.wav")
     pygame.mixer.music.play(-1)
 
     enemy_txy = []
     meteor_txy = []
+    item_txy = []
     bullet_xy = []
     bullet_enemy_xy = []
     
@@ -175,7 +185,11 @@ def runGame():
     player_x_change = 0
     player_y_change = 0
 
+    player_cooltime = 0
+    player_damaged = False
+
     player_health = 100
+    score = 0
 
     crashed = False
     while not crashed:
@@ -218,6 +232,11 @@ def runGame():
             pass
         elif meteor_type == 2:
             meteor_txy.append([meteor[1],random.randrange(30, pad_width - 30),-100])
+            pass
+
+        item_type = random.randrange(1,1000)
+        if item_type == 1:
+            item_txy.append([item[0],random.randrange(30, pad_width - 30),-100])
             pass
 
         enemy_type = random.randrange(1,500)
@@ -305,6 +324,7 @@ def runGame():
                         pass
                     except:
                         pass
+                    player_damaged = True
                     player_health -= 10
                     pass
                 for i, mtr in enumerate(meteor_txy):
@@ -339,7 +359,28 @@ def runGame():
                         pass
                     except:
                         pass
+                    player_damaged = True
                     player_health -= 50
+                    pass
+                pass
+            pass
+
+        if not len(item_txy) == 0:
+            for i, itm in enumerate(item_txy):
+                itm[2] += speed * 1.5
+                item_txy[i][2] = itm[2]
+                if itm[2] >= pad_height:
+                    item_txy.remove(itm)
+                    pass
+                if itm[2] > player_y and itm[2] < player_y + 40 and itm[1] > player_x - 40 and itm[1] < player_x + 40:
+                    if itm[0] == item[0]:
+                        player_health += 20
+                        pass
+                    try:
+                        item_txy.remove(itm)
+                        pass
+                    except:
+                        pass
                     pass
                 pass
             pass
@@ -352,11 +393,15 @@ def runGame():
                 if emy[7] > 15:
                     pygame.mixer.Sound.play(explosion_sound)
                     enemy_txy.remove(emy)
-                    score += 10
+                    score += speed * 2
                     pass
                 if not emy[3]:
                     emy[2] += emy[5]
-                    enemy_txy[i][2] = emy[2]
+                    try:
+                        enemy_txy[i][2] = emy[2]
+                        pass
+                    except:
+                        pass
                     if emy[2] >= pad_height / 10:
                         enemy_txy[i][3] = True
                         pass
@@ -368,6 +413,7 @@ def runGame():
 
                     if emy_attack == 1 and not emy[0] == enemy[2]:
                         bullet_enemy_xy.append([emy[1] + 10, emy[2] + 15])
+                        pygame.mixer.Sound.play(shot_enemy_sound)
                         pass
 
                     if emy_x_change == 1:
@@ -421,17 +467,38 @@ def runGame():
                 pass
             pass
 
+        if not len(item_txy) == 0:
+            for it, ix, iy in item_txy:
+                drawObject(it,ix,iy)
+                pass
+            pass
+
         if not len(enemy_txy) == 0:
             for et, ex, ey, eb, exc, exy, ehtl, ecnt in enemy_txy:
                 drawObject(et,ex,ey)
                 pass
             pass
 
-        drawObject(player, player_x, player_y)
+        if player_cooltime == 10 and player_damaged:
+            player_damaged = False
+            player_cooltime = 0
+            pass
+        elif player_damaged:
+            player_cooltime += 1
+            pass
+
+        if player_damaged:
+            drawObject(player[1], player_x, player_y)
+            pass
+        else:
+            drawObject(player[0], player_x, player_y)
+            pass
+        
         if player_health < 0:
             player_health = 0
             pass
-        drawText(str(player_health), 50, color.white, 10, 20, left)
+        drawObject(energy_icon, 10, 15)
+        drawText(str(player_health), 50, color.orange, 35, 20, left)
         drawText(str(score), 50, color.white, pad_width - 10, 20, right)
         pygame.display.update()
         clock.tick(60)
