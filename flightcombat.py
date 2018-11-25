@@ -41,6 +41,7 @@ def drawText(text, size, color, x, y, align):
 def initGame():
     global gamepad, clock, background1, background2
     global player, enemy, meteor, bullet, bullet_enemy
+    global shot_sound, explosion_sound
 
     enemy = []
     meteor = []
@@ -60,6 +61,9 @@ def initGame():
     meteor.append(pygame.image.load("image/meteor_b.png"))
     bullet = pygame.image.load("image/bullet.png")
     bullet_enemy = pygame.image.load("image/bullet_enemy.png")
+
+    shot_sound = pygame.mixer.Sound("sound/laser.wav")
+    explosion_sound = pygame.mixer.Sound("sound/explosion.wav")
     
     clock = pygame.time.Clock()
     mainScreen()
@@ -122,6 +126,7 @@ def mainScreen():
 
 def gameOver():
     global gamepad
+    pygame.mixer.music.stop()
     drawText("Game Over", 100, color.red, pad_width / 2, pad_height / 2 - 50, center)
     drawText("Your Score : " + str(score), 50, color.white, pad_width / 2, pad_height / 2 + 30, center)
     drawText("Replay? (Y / N)", 50, color.white, pad_width / 2, pad_height / 2 + 80, center)
@@ -138,6 +143,10 @@ def gameOver():
                     quit()
                     pass
                 pass
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+                pass
             pass
         pass
     pass
@@ -145,6 +154,10 @@ def gameOver():
 def runGame():
     global gamepad, clock, background1, background2
     global player, enemy, meteor, bullet, bullet_enemy, score
+    global shot_sound, explosion_sound
+
+    pygame.mixer.music.load("sound/title.wav")
+    pygame.mixer.music.play(-1)
 
     enemy_txy = []
     meteor_txy = []
@@ -191,6 +204,7 @@ def runGame():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     bullet_xy.append([player_x+11,player_y])
+                    pygame.mixer.Sound.play(shot_sound)
                     pass
                 pass
             if event.type == pygame.QUIT:
@@ -336,6 +350,7 @@ def runGame():
                         emy[7] += 1
                         pass
                 if emy[7] > 15:
+                    pygame.mixer.Sound.play(explosion_sound)
                     enemy_txy.remove(emy)
                     score += 10
                     pass
