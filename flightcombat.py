@@ -183,9 +183,20 @@ def runGame():
     item_txy = []
     bullet_xy = []
     bullet_enemy_xy = []
+
+    try:
+        with open("leveldat", "r") as dif:
+            difficulty = float(dif.readline())
+            cheet = int(dif.readline())
+            pass
+        pass
+    except OSError:
+        difficulty = 1
+        cheet = 0
+        pass
     
-    speed = 3
-    enemy_max = 1
+    speed = 3*difficulty
+    enemy_max = 1*difficulty
     
     background1_y = 0
     background2_y = -pad_height
@@ -201,49 +212,67 @@ def runGame():
     player_shielded = False
 
     player_health = 100
-
     kill_count = 0
     score = 0
 
     crashed = False
     while not crashed:
+        
         if player_health <= 0:
             gameOver()
             pass
+        
         for event in pygame.event.get():
+            if cheet==0:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    bullet_xy.append([player_x+11,player_y])
+                    pygame.mixer.Sound.play(shot_sound)
+                    pass
+                pass
+            else:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    for i in range(0, 20):
+                        bullet_xy.append([player_x+11,player_y+0.05*i])
+                        pass
+                    pygame.mixer.Sound.play(shot_sound)
+                    pass
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_k:
+                    player_health = 0
+                    pass
+                pass
+            
             if pygame.key.get_pressed()[pygame.K_w]:
-                player_y_change = -3 - speed * 0.1
+                player_y_change = -3 - speed * 0.2
                 pass
             elif pygame.key.get_pressed()[pygame.K_s]:
-                player_y_change = 3 + speed * 0.1
+                player_y_change = 3 + speed * 0.2
                 pass
             else:
                 player_y_change = 0
                 pass
             if pygame.key.get_pressed()[pygame.K_a]:
-                player_x_change = -3 - speed * 0.1
+                player_x_change = -3 - speed * 0.2
                 pass
             elif pygame.key.get_pressed()[pygame.K_d]:
-                player_x_change = 3 + speed * 0.1
+                player_x_change = 3 + speed * 0.2
                 pass
             else:
                 player_x_change = 0
                 pass
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    bullet_xy.append([player_x+11,player_y])
-                    pygame.mixer.Sound.play(shot_sound)
-                    pass
-                pass
+            
             if event.type == pygame.QUIT:
                 crashed = True
                 pass
             pass
 
-        speed = 3 + kill_count * 0.05
-        enemy_max = 1 + kill_count * 0.02
+        speed = 3 + kill_count * 0.05 * difficulty
+        if speed > 35:
+            speed = 35
+            pass
         
-        meteor_type = random.randrange(1,int(1000 / speed))
+        enemy_max = 1 + kill_count * 0.02 * difficulty
+        
+        meteor_type = random.randrange(1,int(1000 / (speed * difficulty)))
         if meteor_type == 1:
             meteor_txy.append([meteor[0],random.randrange(30, pad_width - 30),-100])
             pass
@@ -251,7 +280,7 @@ def runGame():
             meteor_txy.append([meteor[1],random.randrange(30, pad_width - 30),-100])
             pass
 
-        item_type = random.randrange(1,int(speed * 700))
+        item_type = random.randrange(1,int(speed * 700 * difficulty))
         if item_type == 1:
             item_txy.append([item[0],random.randrange(30, pad_width - 30),-100])
             pass
@@ -261,10 +290,10 @@ def runGame():
         
         enemy_type = random.randrange(1,int(700 / speed))
         if enemy_type == 1 and len(enemy_txy) < enemy_max:
-            enemy_txy.append([enemy[0],random.randrange(100, pad_width - 100),-100,False,0,speed / 2, random.randrange(10,100), 0])
+            enemy_txy.append([enemy[0],random.randrange(100, pad_width - 100),-100,False,0,speed / 2, random.randrange(10,100*difficulty), 0])
             pass
         elif enemy_type == 2 and len(enemy_txy) < enemy_max:
-            enemy_txy.append([enemy[1],random.randrange(100, pad_width - 100),-100,False,0,speed / 2, random.randrange(10,100), 0])
+            enemy_txy.append([enemy[1],random.randrange(100, pad_width - 100),-100,False,0,speed / 2, random.randrange(10,100*difficulty), 0])
             pass
         
         background1_y += speed
@@ -316,9 +345,16 @@ def runGame():
                         pass
                     pass
                 for i, mtr in enumerate(meteor_txy):
-                    if bxy[1] > mtr[2] and bxy[1] < mtr[2] + 30 and bxy[0] > mtr[1] - 40 and bxy[0] < mtr[1] + 40:
+                    if not cheet and bxy[1] > mtr[2] and bxy[1] < mtr[2] + 30 and bxy[0] > mtr[1] - 40 and bxy[0] < mtr[1] + 40:
                         try:
                             bullet_xy.remove(bxy)
+                            pass
+                        except:
+                            pass
+                        pass
+                    elif cheet and bxy[1] > mtr[2]-10 and bxy[1] < mtr[2] + 40 and bxy[0] > mtr[1] - 50 and bxy[0] < mtr[1] + 50:
+                        try:
+                            meteor_txy.remove(mtr)
                             pass
                         except:
                             pass
@@ -344,14 +380,25 @@ def runGame():
                         pass
                     except:
                         pass
-                    if not player_shielded:
+                    if not player_shielded :
                         pygame.mixer.Sound.play(crash_sound)
                         player_damaged = True
-                        player_health -= 10
+                        if not cheet:
+                            player_health -= 10*difficulty
+                            pass
                         pass
                     pass
                 for i, mtr in enumerate(meteor_txy):
                     if bxy[1] > mtr[2] and bxy[1] < mtr[2] + 30 and bxy[0] > mtr[1] - 40 and bxy[0] < mtr[1] + 40:
+                        try:
+                            bullet_enemy_xy.remove(bxy)
+                            pass
+                        except:
+                            pass
+                        pass
+                    pass
+                for i, blt in enumerate(bullet_xy):
+                    if bxy[1] > blt[1] and bxy[1] < blt[1] + 30 and bxy[0] > blt[0] - 30 and bxy[0] < blt[0] + 30:
                         try:
                             bullet_enemy_xy.remove(bxy)
                             pass
@@ -389,7 +436,9 @@ def runGame():
                         pass
                     else:
                         player_damaged = True
-                        player_health -= 50
+                        if not cheet:
+                            player_health -= 25 * difficulty
+                            pass
                         pass
                     pass
                 pass
@@ -428,7 +477,7 @@ def runGame():
                     pygame.mixer.Sound.play(explosion_sound)
                     enemy_txy.remove(emy)
                     kill_count += 1
-                    score += int(speed * 3.14)
+                    score += int(speed * 3.14 * difficulty)
                     pass
                 if not emy[3]:
                     emy[2] += emy[5]
@@ -446,7 +495,7 @@ def runGame():
                         pass
                     pass
                 else:
-                    emy_attack = random.randrange(1,int(700/speed))
+                    emy_attack = random.randrange(1,int(700/(speed*difficulty)))
                     emy_x_change = random.randrange(1,100)
                     emy_y_change = random.randrange(1,100)
 
