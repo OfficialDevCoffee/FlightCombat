@@ -6,7 +6,7 @@ from time import sleep
 import color
 
 pad_width = 480
-pad_height = 720
+pad_height = 650
 caption = "Flight Combat"
 left = 0
 center = 1
