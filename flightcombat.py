@@ -5,6 +5,7 @@ import pygame, random
 from time import sleep
 import color
 
+framerate = 30
 pad_width = 480
 pad_height = 650
 caption = "Flight Combat"
@@ -599,7 +600,7 @@ def runGame():
         drawText(str(player_health), 50, color.orange, 35, 20, left)
         drawText(str(score), 50, color.white, pad_width - 10, 20, right)
         pygame.display.update()
-        clock.tick(60)
+        clock.tick(framerate)
         pass
     
     pygame.quit()
